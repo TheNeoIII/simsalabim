@@ -32,11 +32,15 @@ boolean stateDel;
 boolean stateRouter;
 boolean stateTaster;
 int uid[10];
+int masterUID[10] = {0x14,0x72,0x95,0x5B,0x00,0x00,0x00,0x00,0x00,0x00}; //Programming chip to add new cards
 int startPos;
 int doorSeconds = 3;
 
 boolean isOpen = false;
 unsigned long openUntil;
+
+boolean isAddMode = false;
+unsigned long addModeUntil;
 
 void setup(){
 	//Debug output
@@ -156,6 +160,10 @@ void deleteUID(){
     EEPROM.write(keyCounter, keyCount - 1); //decrement key counter
   }
 }
+void addMode(){
+  isAddMode = true;
+  addModeUntil = millis()+1500;
+}
 void openDoor(){
   digitalWrite(pinRelais, HIGH);
   //Timer1.initialize(1000000 * doorSeconds);
@@ -165,12 +173,31 @@ void openDoor(){
 }
 void checkUID(){
   Serial.println("Check");
-  if(searchUID()){
+  if(searchUID() && !isMasterKey()){ //Open door only for normal card, not for master key
     openDoor();
   }
 }
 
+void checkMasterKey(){
+  //If master key detected, start add mode for some time
+  if(isMasterKey()){
+    isAddMode = true;
+    addModeUntil = millis()+1500;
+  }
+}
+
+boolean isMasterKey(){
+  int matches = 0;
+  for(int i=0;i<10;i++){
+    if(masterUID[i] == uid[i]) matches++;
+  }
+  if(matches == 10) return true;
+  else return false;
+   
+}
+
 void loop(){
+        //If openDoor() called and time elapsed, close dor again
 	if(isOpen && millis() > openUntil){
 		digitalWrite(pinRelais, LOW);
 		isOpen = false;
@@ -179,6 +206,12 @@ void loop(){
 	        SPI.begin();               // Init SPI bus
                 mfrc522.PCD_Init();        // Init MFRC522 card
 	}
+        //end addMode after time elapsed
+        if(isAddMode && millis() > addModeUntil){
+		isAddMode = false;
+	}
+
+        //Reset uid to zero
         uid[0] = 0x00;
         uid[1] = 0x00;
         uid[2] = 0x00;
@@ -189,6 +222,7 @@ void loop(){
         uid[7] = 0x00;
         uid[8] = 0x00;
         uid[9] = 0x00;
+        
         stateAdd = digitalRead(pinAdd);
         stateDel = digitalRead(pinDel);
         stateRouter = digitalRead(pinRouter);
@@ -212,15 +246,20 @@ void loop(){
         // Dump UID
         Serial.print("Card UID:");
         for (byte i = 0; i < mfrc522.uid.size; i++) {
-             //Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
+             Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
              Serial.print(mfrc522.uid.uidByte[i], HEX);
              uid[i] = mfrc522.uid.uidByte[i];
         } 
         Serial.println();
         
-        if(stateAdd){
+        checkMasterKey();
+        
+        Serial.print("Master Key Mode:");
+        Serial.println(isAddMode);
+        
+        if(!stateAdd || isAddMode){
           saveUID();
-        }else if(stateDel){
+        }else if(!stateDel){
           deleteUID();
         }else{
           checkUID();
