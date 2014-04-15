@@ -134,6 +134,7 @@ void saveUID(){
       EEPROM.write(startPos + i, uid[i]);
     }
     EEPROM.write(keyCounter, numEntries() + 1); //Increment key counter
+    isAddMode = false;
   }
 }
 void deleteUID(){
@@ -197,11 +198,14 @@ boolean isMasterKey(){
 }
 
 void loop(){
+//Setup rfid module
+        
+        
+        
         //If openDoor() called and time elapsed, close dor again
 	if(isOpen && millis() > openUntil){
 		digitalWrite(pinRelais, LOW);
 		isOpen = false;
-                //Setup rfid module
                 SPI.end();
 	        SPI.begin();               // Init SPI bus
                 mfrc522.PCD_Init();        // Init MFRC522 card
@@ -209,6 +213,9 @@ void loop(){
         //end addMode after time elapsed
         if(isAddMode && millis() > addModeUntil){
 		isAddMode = false;
+                SPI.end();
+	        SPI.begin();               // Init SPI bus
+                mfrc522.PCD_Init();        // Init MFRC522 card
 	}
 
         //Reset uid to zero
@@ -268,6 +275,6 @@ void loop(){
         Serial.print("Num Keys:");
         Serial.println(numEntries());
         
-        delay(50);
+        delay(250);
 }
 
