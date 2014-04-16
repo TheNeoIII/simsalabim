@@ -1,4 +1,4 @@
-#include <TimerOne.h>
+//#include <TimerOne.h>
 
 /*
 Read RFID UID, Store UID, Switch Relais to open door for 3 sec
@@ -15,8 +15,6 @@ const byte
   pinTaster = 7,
   pinRelais = 3,
   pinRouter = 4,
-  pinAdd    = 8,
-  pinDel    = 9, // ??? TODO! RST PIN!
   pinRST    = 9,
   pinSS     = 10,
 
@@ -29,8 +27,6 @@ boolean
   spiBegan,
   stateAdd,
   stateDel,
-  stateRouter,
-  stateTaster,
   isOpen,
   isAddMode;
 
@@ -38,15 +34,14 @@ MFRC522 mfrc522(pinSS, pinRST);        // Create MFRC522 instance.
 
 byte
   keyCounter  = 0, 	//Storage location for key counter - max 255 keys
-  opMode      = 0;  //0=normal,1=add,2=del
+  opMode      = 0,  //0=normal,1=add,2=del
+  uid[10];
 
-int uid[10];
 int startPos;
 
 unsigned long
   openUntil,
   addModeUntil;
-
 
 void setupRFID()
 {
@@ -58,29 +53,25 @@ void setupRFID()
   mfrc522.PCD_Init();
 }
 
-void setup(){
-	//Debug output
-	Serial.begin(115200);
-	
-  setupRFID();
-    
-	//Setup adding mode switch
-	pinMode(pinAdd, INPUT_PULLUP);
-	
-	//Setup delete mode switch
-	pinMode(pinDel, INPUT_PULLUP);
-
+void setupPINS()
+{
   //EEPROM.write(keyCounter, 0x00); //Reset counter
   
   //setup taster input
   pinMode(pinTaster, INPUT_PULLUP);
-  
-  //router input
-  pinMode(pinRouter, INPUT_PULLUP);
-  
+   
   //relais output
   pinMode(pinRelais, OUTPUT);
-  digitalWrite(pinRelais, LOW);
+  digitalWrite(pinRelais, LOW);  
+}
+
+
+void setup(){
+	//Debug output
+	Serial.begin(9600);
+	
+  setupRFID();
+  setupPINS();
 }
 
 void doorTimer(){  //Called from interrupt timerone
@@ -153,7 +144,8 @@ void saveUID(){
 }
 void deleteUID(){
   Serial.println("Del");
-  if(searchUID()){
+  if (searchUID())
+  {
     //Search position
     int keyPos = posUID();
     int keyCount = numEntries();
@@ -238,27 +230,10 @@ void loop()
   doorLoop();  // Handle the door state (close it if needed)
   modeLoop();  // Handle the mode timing
 
-  //Reset uid to zero
-  uid[0] = 0x00;
-  uid[1] = 0x00;
-  uid[2] = 0x00;
-  uid[3] = 0x00;
-  uid[4] = 0x00;
-  uid[5] = 0x00;
-  uid[6] = 0x00;
-  uid[7] = 0x00;
-  uid[8] = 0x00;
-  uid[9] = 0x00;
-        
-  stateAdd = digitalRead(pinAdd);
-  stateDel = digitalRead(pinDel);
-  stateRouter = digitalRead(pinRouter);
-  stateTaster = digitalRead(pinTaster);
-  
-  if(!stateTaster){
+  if(digitalRead(pinTaster) == LOW){
     openDoor();
   }
-        
+
 	// Look for new cards
   if ( ! mfrc522.PICC_IsNewCardPresent()) {
       return;
@@ -269,6 +244,9 @@ void loop()
        return;
   }
   // Now a card is selected. The UID and SAK is in mfrc522.uid.
+
+  //Reset uid to zero
+  memset(uid, 0, 10);
           
   // Dump UID
   Serial.print("Card UID:");
@@ -281,14 +259,9 @@ void loop()
   
   checkMasterKey();
   
-  Serial.print("Master Key Mode:");
-  Serial.println(isAddMode);
-  
-  if(!stateAdd || isAddMode){
+  if (isAddMode){
     saveUID();
-  }else if(!stateDel){
-    deleteUID();
-  }else{
+  } else {
     checkUID();
   }
   
