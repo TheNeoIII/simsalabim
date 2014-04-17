@@ -209,18 +209,11 @@ void rfidLoop()
        return;
   }
 
-  //Reset uid to zero
+  // Normalize the card's UID to 10 bytes
   memset(currentUID, 0, 10);
+  memcpy(currentUID, rfid.uid.uidByte, rfid.uid.size);
 
-  // Dump UID
-  Serial.print(F("[rfid] found card "));
-
-  for (byte i = 0; i < rfid.uid.size && i < keySize; i++) {
-       Serial.print(rfid.uid.uidByte[i] < 0x10 ? " 0" : " ");
-       Serial.print(rfid.uid.uidByte[i], HEX);
-       currentUID[i] = rfid.uid.uidByte[i];
-  }
-  Serial.println();
+  dumpUID();
 
   // Handle the found key accordingly
   if (isMasterKey()) {
@@ -234,6 +227,14 @@ void rfidLoop()
   }
 }
 
+void dumpUID() {
+  Serial.print(F("[rfid] current card's ID: "));
+  for (byte i = 0; i < keySize; i++) {
+    Serial.print(currentUID[i] < 0x10 ? " 0" : " ");
+    Serial.print(currentUID[i], HEX);
+  }
+  Serial.println();
+}
 
 boolean isMasterKey(){
   for (byte i=0; i<10; i++) {
