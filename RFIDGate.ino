@@ -11,6 +11,8 @@ Delete Mode: Search for UID in EEPROM, if present, delete
 #include <SPI.h>
 #include <MFRC522.h>
 
+const int NOT_FOUND = -1;
+
 const byte
   pinTaster = 7,
   pinRelais = 3,
@@ -20,24 +22,19 @@ const byte
 
   masterUID[10] = {0x14,0x72,0x95,0x5B,0x00,0x00,0x00,0x00,0x00,0x00}, //Programming chip to add new cards
 
-  keySize   = 10,   // num of storage blocks for one uid
-  keyStart  = 100;  //storage start position for keys
+  keySize   = 10,   // num of bytes used to identify the key
+  storageAddress = 100;  //storage start position for keys
 
 boolean
   spiBegan,
   stateAdd,
-  stateDel,
-  isOpen,
-  isAddMode;
+  stateDel;
 
-MFRC522 mfrc522(pinSS, pinRST);        // Create MFRC522 instance.
+MFRC522 rfid(pinSS, pinRST);
 
 byte
-  keyCounter  = 0, 	//Storage location for key counter - max 255 keys
-  opMode      = 0,  //0=normal,1=add,2=del
-  uid[10];
-
-int startPos;
+  counterAddress = 0, //Storage location for key counter - max 255 keys
+  currentUID[10];
 
 unsigned long
   openUntil,
@@ -45,229 +42,215 @@ unsigned long
 
 void setupRFID()
 {
-  // Reset SPI bus
-  SPI.end();
+  // Init SPI bus
   SPI.begin();
 
   // Init MFRC522 module
-  mfrc522.PCD_Init();
+  rfid.PCD_Init();
+}
+
+void resetRFID()
+{
+  rfid.PCD_Reset();
 }
 
 void setupPINS()
 {
   //EEPROM.write(keyCounter, 0x00); //Reset counter
-  
+
   //setup taster input
   pinMode(pinTaster, INPUT_PULLUP);
-   
+
   //relais output
   pinMode(pinRelais, OUTPUT);
-  digitalWrite(pinRelais, LOW);  
+  digitalWrite(pinRelais, LOW);
 }
 
 
 void setup(){
 	//Debug output
 	Serial.begin(9600);
-	
+
   setupRFID();
   setupPINS();
 }
 
 void doorTimer(){  //Called from interrupt timerone
-   digitalWrite(pinRelais, LOW); 
+   digitalWrite(pinRelais, LOW);
    //Timer1.detachInterrupt();
 }
 
-int numEntries(){
-   return EEPROM.read(keyCounter);
+int getKeyCount(){
+   return EEPROM.read(counterAddress);
 }
 
-boolean searchUID(){
-  boolean retVal = false;
-  int entries = numEntries();
-  int i,j = 0;
-  int res;
-  int matchBlocks;
-  for(i=0;i<entries;i++){ //look on each key
-    matchBlocks = 0;
-    startPos = keyStart + (keySize*i);
-    for(j=0;j<keySize;j++){     //compare each block of 5
-      if(EEPROM.read(startPos + j) == uid[j]){ 
-        matchBlocks++;
-      }
-    }
-    
-    if(matchBlocks == keySize){
-      return true;
-    }
-    
-  }
-  
-  return retVal;
-}
 
-int posUID(){
-  int retKey = 0;
-  int entries = numEntries();
-  int i,j = 0;
-  int res;
-  int matchBlocks;
-  for(i=0;i<entries;i++){ //look on each key
-    matchBlocks = 0;
-    startPos = keyStart + (keySize*i);
-    for(j=0;j<keySize;j++){     //compare each block of 5
-      if(EEPROM.read(startPos + j) == uid[j]){ 
-        matchBlocks++;
+// Returns the number of the current key or NOT_FOUND if no key matches
+int findKey() {
+  int address;
+  boolean matching;
+
+  byte keyCount = getKeyCount();
+
+  // Iterate over all stored keys
+  for (byte i=0; i<keyCount; i++) {
+    matching = true;
+    address = storageAddress + (keySize*i);
+
+    // Compare the stored key with the received one - as soon as we get
+    // a missmatching byte, continue with the next one
+    for(byte j=0; j<keySize; j++) {
+      if (EEPROM.read(address + j) != currentUID[j]) {
+        matching = false;
+        break;
       }
     }
-    
-    if(matchBlocks == keySize){
+
+    if (matching)
+    {
+      Serial.print(F("[find] Identified key "));
+      Serial.println(i);
       return i;
     }
-    
   }
-  
-  return retKey;
+
+  Serial.println(F("[find] No stored key matches"));
+  return NOT_FOUND;
 }
 
-void saveUID(){
-  Serial.println("Add");
-  if(!searchUID()){ //Save when not in database
-    startPos = keyStart + (numEntries() * keySize);
-    for(int i=0;i<keySize;i++){
-      EEPROM.write(startPos + i, uid[i]);
-    }
-    EEPROM.write(keyCounter, numEntries() + 1); //Increment key counter
-    isAddMode = false;
+void saveKey() {
+  if (findKey() == NOT_FOUND) {
+    Serial.println(F("[save] Won't save key - already present"));
+    return;
   }
-}
-void deleteUID(){
-  Serial.println("Del");
-  if (searchUID())
-  {
-    //Search position
-    int keyPos = posUID();
-    int keyCount = numEntries();
-    Serial.println(keyPos);
-    //remove on current position
-    startPos = keyStart + (keyPos * keySize);
-    for(int i=0;i<keySize;i++){
-        EEPROM.write(startPos + i, 0);
-    }
-    //if not last key, move last key into empty space
-    if((keyPos + 1) < keyCount){
-      int lastKeyStart = keyStart + ((keyCount - 1) * keySize);
-      for(int i=0;i<keySize;i++){
-        EEPROM.write(startPos + i, EEPROM.read(lastKeyStart + 1));
-        EEPROM.write(lastKeyStart + 1, 0);
-      }
-    }
-    
-    EEPROM.write(keyCounter, keyCount - 1); //decrement key counter
+
+  int address = storageAddress + getKeyCount() * keySize;
+
+  // Save each byte of the key
+  for(int i=0; i<keySize; i++) {
+    EEPROM.write(address + i, currentUID[i]);
   }
+
+  // Increment key counter
+  EEPROM.write(counterAddress, getKeyCount() + 1);
+
+  addModeUntil = 0;
 }
-void addMode(){
-  isAddMode = true;
-  addModeUntil = millis()+1500;
+
+void deleteKey(){
+  int key = findKey();
+  if (key == NOT_FOUND) {
+    Serial.println(F("[delete] Won't delete key - not present in DB"));
+    return;
+  }
+
+  int keyCount = getKeyCount();
+
+  int address = storageAddress + key * keySize;
+  int lastAddress = storageAddress + (keyCount - 1) * keySize;
+
+  // Remove key - zero it if its the last in storage,
+  // otherwise pull last key to the current key's position
+  for(int i=0;i<keySize;i++) {
+    if(address != lastAddress){
+      EEPROM.write(address + i, EEPROM.read(lastAddress + 1));
+      EEPROM.write(lastAddress + 1, 0);
+    } else
+    {
+      EEPROM.write(address + i, 0);
+    }
+  }
+
+  // decrement key counter
+  EEPROM.write(counterAddress, keyCount - 1);
 }
+
 void openDoor(){
+  Serial.println(F("[door] opening!"));
   digitalWrite(pinRelais, HIGH);
-  //Timer1.initialize(1000000 * doorSeconds);
-  //Timer1.attachInterrupt(doorTimer);
   openUntil = millis()+1500;
-  isOpen = true;
-}
-void checkUID(){
-  Serial.println("Check");
-  if(searchUID() && !isMasterKey()){ //Open door only for normal card, not for master key
-    openDoor();
-  }
-}
-
-void checkMasterKey(){
-  //If master key detected, start add mode for some time
-  if(isMasterKey()){
-    isAddMode = true;
-    addModeUntil = millis()+1500;
-  }
-}
-
-boolean isMasterKey(){
-  int matches = 0;
-  for(int i=0;i<10;i++){
-    if(masterUID[i] == uid[i]) matches++;
-  }
-  if(matches == 10) return true;
-  else return false;
-   
 }
 
 void doorLoop()
 {
-  //If openDoor() called and time elapsed, close dor again
-  if(isOpen && millis() > openUntil){
-    
+  // Close the door if it has been open long enough
+  if(openUntil > 0 && millis() > openUntil){
+
     digitalWrite(pinRelais, LOW);
-    isOpen = false;
-    
-    setupRFID();            
+    openUntil = 0;
+
+    // Reset the RFID module after each usage
+    setupRFID();
   }
 }
 
 void modeLoop()
 {
+  // Switch back to normal mode if speical mode timer is reached
+  if(addModeUntil > 0 && millis() > addModeUntil){
+    addModeUntil = 0;
 
-  //end addMode after time elapsed
-  if(isAddMode && millis() > addModeUntil){
-    isAddMode = false;
+    // Reset the RFID module after each usage
     setupRFID();
-  }  
+  }
 }
 
 void loop()
 {
   doorLoop();  // Handle the door state (close it if needed)
   modeLoop();  // Handle the mode timing
+  rfidLoop();  // Check if a key is present and handle it
 
+  // Check if the Taster is being pressed
   if(digitalRead(pinTaster) == LOW){
     openDoor();
   }
+}
 
-	// Look for new cards
-  if ( ! mfrc522.PICC_IsNewCardPresent()) {
+void rfidLoop()
+{
+  // Look for new cards
+  if (!rfid.PICC_IsNewCardPresent()) {
       return;
   }
-  
+
   // Select one of the cards
-  if ( ! mfrc522.PICC_ReadCardSerial()) {
+  if (!rfid.PICC_ReadCardSerial()) {
        return;
   }
-  // Now a card is selected. The UID and SAK is in mfrc522.uid.
 
   //Reset uid to zero
-  memset(uid, 0, 10);
-          
+  memset(currentUID, 0, 10);
+
   // Dump UID
-  Serial.print("Card UID:");
-  for (byte i = 0; i < mfrc522.uid.size; i++) {
-       Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
-       Serial.print(mfrc522.uid.uidByte[i], HEX);
-       uid[i] = mfrc522.uid.uidByte[i];
-  } 
-  Serial.println();
-  
-  checkMasterKey();
-  
-  if (isAddMode){
-    saveUID();
-  } else {
-    checkUID();
+  Serial.print(F("[rfid] found card "));
+
+  for (byte i = 0; i < rfid.uid.size && i < keySize; i++) {
+       Serial.print(rfid.uid.uidByte[i] < 0x10 ? " 0" : " ");
+       Serial.print(rfid.uid.uidByte[i], HEX);
+       currentUID[i] = rfid.uid.uidByte[i];
   }
-  
-  Serial.print("Num Keys:");
-  Serial.println(numEntries());
-  
-  delay(250);
+  Serial.println();
+
+  // Handle the found key accordingly
+  if (isMasterKey()) {
+    addModeUntil = millis()+1500;
+  } else if (addModeUntil > 0)
+  {
+    saveKey();
+  } else if(findKey() != NOT_FOUND) {
+    openDoor();
+  }
+}
+
+
+boolean isMasterKey(){
+  for (byte i=0; i<10; i++) {
+    if(masterUID[i] != currentUID[i])
+    {
+      return false;
+    }
+  }
+  return true;
 }
 
