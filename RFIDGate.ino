@@ -25,11 +25,6 @@ const byte
   keySize   = 10,   // num of bytes used to identify the key
   storageAddress = 100;  //storage start position for keys
 
-boolean
-  spiBegan,
-  stateAdd,
-  stateDel;
-
 MFRC522 rfid(pinSS, pinRST);
 
 byte
@@ -38,7 +33,30 @@ byte
 
 unsigned long
   openUntil,
-  addModeUntil;
+  addUntil;
+
+// Prototypes for the functions called from inside the setup routine
+void setupRFID();
+void setupPINS();
+
+void setup(){
+  Serial.begin(9600);
+
+  setupRFID(); // Initialize the RFID module
+  setupPINS(); // Setup the PIN modes
+}
+
+void loop()
+{
+  doorLoop();  // Handle the door state (close it if needed)
+  modeLoop();  // Handle the mode timing
+  rfidLoop();  // Check if a key is present and handle it
+
+  // Check if the door opener has been pressed
+  if (digitalRead(pinTaster) == LOW) {
+    openDoor();
+  }
+}
 
 void setupRFID()
 {
@@ -64,20 +82,6 @@ void setupPINS()
   //relais output
   pinMode(pinRelais, OUTPUT);
   digitalWrite(pinRelais, LOW);
-}
-
-
-void setup(){
-	//Debug output
-	Serial.begin(9600);
-
-  setupRFID();
-  setupPINS();
-}
-
-void doorTimer(){  //Called from interrupt timerone
-   digitalWrite(pinRelais, LOW);
-   //Timer1.detachInterrupt();
 }
 
 int getKeyCount(){
@@ -133,8 +137,6 @@ void saveKey() {
 
   // Increment key counter
   EEPROM.write(counterAddress, getKeyCount() + 1);
-
-  addModeUntil = 0;
 }
 
 void deleteKey(){
@@ -180,30 +182,18 @@ void doorLoop()
     openUntil = 0;
 
     // Reset the RFID module after each usage
-    setupRFID();
+    resetRFID();
   }
 }
 
 void modeLoop()
 {
   // Switch back to normal mode if speical mode timer is reached
-  if(addModeUntil > 0 && millis() > addModeUntil){
-    addModeUntil = 0;
+  if(addUntil > 0 && millis() > addUntil){
+    addUntil = 0;
 
     // Reset the RFID module after each usage
-    setupRFID();
-  }
-}
-
-void loop()
-{
-  doorLoop();  // Handle the door state (close it if needed)
-  modeLoop();  // Handle the mode timing
-  rfidLoop();  // Check if a key is present and handle it
-
-  // Check if the Taster is being pressed
-  if(digitalRead(pinTaster) == LOW){
-    openDoor();
+    resetRFID();
   }
 }
 
@@ -234,10 +224,11 @@ void rfidLoop()
 
   // Handle the found key accordingly
   if (isMasterKey()) {
-    addModeUntil = millis()+1500;
-  } else if (addModeUntil > 0)
+    addUntil = millis()+1500;
+  } else if (addUntil > 0)
   {
     saveKey();
+    addUntil = 0;
   } else if(findKey() != NOT_FOUND) {
     openDoor();
   }
