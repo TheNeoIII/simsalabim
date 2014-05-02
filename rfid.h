@@ -11,10 +11,13 @@ void dumpUID();
 
 //rfid.h
 void setupRFID(){
+        pinMode(pinSS, OUTPUT);
+        digitalWrite(pinSS, LOW); //enable rfid module
 	// Init SPI bus
 	SPI.begin();
 	// Init MFRC522 module
 	rfid.PCD_Init();
+        digitalWrite(pinSS, HIGH); //disable rfid module
 }
 
 void resetRFID(){
@@ -26,7 +29,7 @@ void loopRFID(){
           statScan = true;
         }
 	if(statScan){
-                digitalWrite(6, LOW);//enable rfid module
+                digitalWrite(pinSS, LOW);//enable rfid module
 		//setupRFID();
                 resetRFID();
 		
@@ -46,17 +49,17 @@ void loopRFID(){
 		
 		dumpUID();
                 
-                digitalWrite(6, HIGH);//disable rfid module
+                digitalWrite(pinSS, HIGH);//disable rfid module
 
                 loopMasterKeys();
 
 		// Handle the found key accordingly
 		if (statProg){
 			saveKey();
-                        dataString += "[rfid] key saved";
+                        //dataString += "[rfid] key saved";
 		} else if(findKey() != NOT_FOUND) {
 			openDoor();
-                        dataString += "[rfid] key opened door";
+                        //dataString += "[rfid] key opened door";
 		}
                 statScan = false;
                 timeRFID = millis() + 500; //wait 500ms before next scan

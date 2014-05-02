@@ -13,9 +13,9 @@ Delete Mode: Search for UID in EEPROM, if present, delete
 #include <avr/wdt.h>
 #include <EtherCard.h>
 #include <stdio.h>
-#include <SD.h>
+//#include <SD.h>
   
-#include "sdcard.h"
+//#include "sdcard.h"
 #include "relais.h"
 #include "taster.h"
 #include "eepromkey.h"
@@ -40,10 +40,10 @@ void setup(){
   
   
 
-  //setupRFID(); // Initialize the RFID module
+  setupRFID(); // Initialize the RFID module
   setupTaster();
   setupRelais();
-  setupSDCard();
+  //setupSDCard();
   setupWebserver();
   
   
@@ -54,12 +54,15 @@ void setup(){
 
 void loop()
 {
-        loopSDCard();
+        //loopSDCard();
+        //wdt_reset(); //prevent restart if everything ok
 	loopTaster(); //Handle taster
+        wdt_reset(); //prevent restart if everything ok
 	loopRelais();  // Handle the door state (close it if needed)
+        wdt_reset(); //prevent restart if everything ok
         loopWebserver();
-        
-	//loopRFID();  // Check if a key is present and handle it
+        wdt_reset(); //prevent restart if everything ok
+	loopRFID();  // Check if a key is present and handle it
         wdt_reset(); //prevent restart if everything ok
 }
 

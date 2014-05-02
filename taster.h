@@ -19,6 +19,6 @@ void loopTaster(){
 		openDoor();
                 statTaster = false;
                 timeTaster = millis() + 250; //check taster again in 250ms
-                dataString += "[taster] openDoor";
+                //dataString += "[taster] openDoor";
 	}
 }
