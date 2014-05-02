@@ -1,21 +1,20 @@
 //master-keys.h
-const byte
+boolean isMasterKey();
+byte
 	masterUID[10] = {0x14,0x72,0x95,0x5B,0x00,0x00,0x00,0x00,0x00,0x00}, //Programming chip to add new cards
-	stateProg	= false, //programming mode on or off
-	progDelayMS = 5000;
-	
+	statProg	= false; //programming mode on or off
+
+unsigned long timeMasterKey = 0;
 
 void loopMasterKeys()
 {
+        if(timeMasterKey < millis() && statProg == true){
+          statProg = false;
+        }
 	if(isMasterKey){
-		stateProg = true;
-		Timer1.attachInterrupt(endProgMode, progDelayMS);
+  	  statProg = true;
+          timeMasterKey = millis() + 3000; //3s programming mode
 	}
-}
-
-void endProgMode(){
-	stateProg = false;
-	Timer1.detachInterrupt();
 }
 
 boolean isMasterKey(){

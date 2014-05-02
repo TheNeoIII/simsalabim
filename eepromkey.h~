@@ -1,0 +1,12 @@
+//#include <TimerOne.h>
+
+/*
+Read RFID UID, Store UID, Switch Relais to open door for 3 sec
+Normal Mode: Search for UID in EEPROM, Switch relais if present
+Adding Mode: Search for UID in EEPROM, if not present, add
+Delete Mode: Search for UID in EEPROM, if present, delete
+*/
+
+#include <EEPROM.h>
+
+

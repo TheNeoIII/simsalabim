@@ -1,10 +1,11 @@
 //eeprom-key.h
-const int NOT_FOUND = -1;
-
+int NOT_FOUND = -1;
 
 byte
-	counterAddress = 0, //Storage location for key counter - max 255 keys
-	currentUID[10];
+      keySize   = 10,   // num of bytes used to identify the key
+      storageAddress = 100,  //storage start position for keys
+      counterAddress = 0, //Storage location for key counter - max 255 keys
+      currentUID[10];
 	
 //Return how many keys are in storage
 int getKeyCount(){

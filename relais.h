@@ -1,24 +1,28 @@
 //relais.h
+byte
+  pinRelais = 3,
+  statRelais = false;
+
+unsigned long timeRelais = 0;
+  
 void setupRelais(){
 	//relais output
 	pinMode(pinRelais, OUTPUT);
-	digitalWrite(pinRelais, LOW);
+}
+void closeDoor(){
+  digitalWrite(pinRelais, LOW);
+  Serial.println(F("[door] closed."));
+  statRelais = false;
 }
 void openDoor(){
-  Serial.println(F("[door] opening!"));
+  Serial.println("[door] opening!");
   digitalWrite(pinRelais, HIGH);
-  openUntil = millis()+1500;
+  timeRelais = millis()+3000;
+  statRelais = true;
 }
 
-void loopRelais()
-{
-  // Close the door if it has been open long enough
-  if(openUntil > 0 && millis() > openUntil){
-
-    digitalWrite(pinRelais, LOW);
-    openUntil = 0;
-
-    // Reset the RFID module after each usage
-    resetRFID();
-  }
+void loopRelais(){
+   if(timeRelais < millis() && statRelais == true){
+     closeDoor();
+   }
 }
