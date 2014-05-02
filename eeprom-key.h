@@ -1,0 +1,99 @@
+//eeprom-key.h
+const int NOT_FOUND = -1;
+
+
+byte
+	counterAddress = 0, //Storage location for key counter - max 255 keys
+	currentUID[10];
+	
+//Return how many keys are in storage
+int getKeyCount(){
+   return EEPROM.read(counterAddress);
+}
+
+
+// Returns the number of the current key or NOT_FOUND if no key matches
+int findKey() {
+  int address;
+  boolean matching;
+
+  byte keyCount = getKeyCount();
+
+  // Iterate over all stored keys
+  for (byte i=0; i<keyCount; i++) {
+    matching = true;
+    address = storageAddress + (keySize*i);
+
+    // Compare the stored key with the received one - as soon as we get
+    // a missmatching byte, continue with the next one
+    for(byte j=0; j<keySize; j++) {
+      if (EEPROM.read(address + j) != currentUID[j]) {
+        matching = false;
+        break;
+      }
+    }
+
+    if (matching)
+    {
+      Serial.print(F("[find] Identified key "));
+      Serial.println(i);
+      return i;
+    }
+  }
+
+  Serial.println(F("[find] No stored key matches"));
+  return NOT_FOUND;
+}
+
+void saveKey() {
+  if (findKey() == NOT_FOUND) {
+    Serial.println(F("[save] Won't save key - already present"));
+    return;
+  }
+
+  int address = storageAddress + getKeyCount() * keySize;
+
+  // Save each byte of the key
+  for(int i=0; i<keySize; i++) {
+    EEPROM.write(address + i, currentUID[i]);
+  }
+
+  // Increment key counter
+  EEPROM.write(counterAddress, getKeyCount() + 1);
+}
+
+void deleteKey(){
+  int key = findKey();
+  if (key == NOT_FOUND) {
+    Serial.println(F("[delete] Won't delete key - not present in DB"));
+    return;
+  }
+
+  int keyCount = getKeyCount();
+
+  int address = storageAddress + key * keySize;
+  int lastAddress = storageAddress + (keyCount - 1) * keySize;
+
+  // Remove key - zero it if its the last in storage,
+  // otherwise pull last key to the current key's position
+  for(int i=0;i<keySize;i++) {
+    if(address != lastAddress){
+      EEPROM.write(address + i, EEPROM.read(lastAddress + 1));
+      EEPROM.write(lastAddress + 1, 0);
+    } else
+    {
+      EEPROM.write(address + i, 0);
+    }
+  }
+
+  // decrement key counter
+  EEPROM.write(counterAddress, keyCount - 1);
+}
+void dumpUID() {
+  Serial.print(F("[rfid] current card's ID: "));
+  for (byte i = 0; i < keySize; i++) {
+    Serial.print(currentUID[i] < 0x10 ? " 0" : " ");
+    Serial.print(currentUID[i], HEX);
+  }
+  Serial.println();
+}
