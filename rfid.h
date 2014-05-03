@@ -29,6 +29,9 @@ void loopRFID(){
           statScan = true;
         }
 	if(statScan){
+                statScan = false;
+                timeRFID = millis() + 500; //wait 500ms before next scan
+                Serial.println("[rfid] statScan true");
                 digitalWrite(pinSS, LOW);//enable rfid module
 		//setupRFID();
                 //resetRFID();
@@ -61,8 +64,7 @@ void loopRFID(){
 			openDoor();
                         //dataString += "[rfid] key opened door";
 		}
-                statScan = false;
-                timeRFID = millis() + 500; //wait 500ms before next scan
+                
 	}
 }
 

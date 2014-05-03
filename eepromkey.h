@@ -1,6 +1,6 @@
 
 //eeprom-key.h
-int NOT_FOUND = -1;
+const int NOT_FOUND = -1;
 
 byte
       keySize   = 10,   // num of bytes used to identify the key
@@ -48,7 +48,7 @@ int findKey() {
 }
 
 void saveKey() {
-  if (findKey() == NOT_FOUND) {
+  if (findKey() != NOT_FOUND) {
     Serial.println(F("[save] Won't save key - already present"));
     return;
   }
