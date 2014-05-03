@@ -5,7 +5,6 @@
 #include <avr/wdt.h>
 #include <stdio.h>
 #include <MFRC522.h>
-
 #include <EEPROM.h>
 
 //#include <SD.h>  
@@ -41,13 +40,14 @@ void setup(){
 
 void loop()
 {
-  loopTaster(); // Handle taster
+  loopTaster(); // Handle the door opener
   loopRelais(); // Handle the door state (close it if needed)
+  
   loopRFID();   // Check if a key is present and handle it
 
   //loopWebserver();
   
-  wdt_reset(); //prevent restart if everything ok
+  wdt_reset();  // reset watchdog timer
 }
 
 void setupWatchdog()

@@ -19,8 +19,8 @@ void resetRFID();
 void loopRFID();
 void dumpUID();
 
-boolean isMasterKey();
-boolean searchRFID();
+bool isMasterKey();
+bool searchRFID();
 
 MFRC522 rfid(RFID_SS, RFID_RST);
 
@@ -37,13 +37,12 @@ void resetRFID(){
 }
 
 void loopRFID(){
-  boolean foundCard = false;
   if (timeRFID < millis())
   {
-    timeRFID = millis() + 500; //wait 500ms before next scan
+    timeRFID = millis() + 500; // wait 500ms before next scan
 
     digitalWrite(RFID_SS, LOW);
-    foundCard = searchRFID();
+    bool foundCard = searchRFID();
     digitalWrite(RFID_SS, HIGH);
 
     if (!foundCard) {
@@ -84,7 +83,7 @@ void dumpUID() {
 }
 
 
-boolean isMasterKey(){
+bool isMasterKey(){
   for (byte i=0; i<10; i++) {
     if(masterUID[i] != currentUID[i])
     {
@@ -94,18 +93,18 @@ boolean isMasterKey(){
   return true;
 }
 
-byte searchRFID()
+bool searchRFID()
 {
   if (!rfid.PICC_IsNewCardPresent()) {
-    return 0;
+    return false;
   }
 
   // Select one of the cards
   if (!rfid.PICC_ReadCardSerial()) {
-    return 0;
+    return false;
   }
 
-  return 1;
+  return true;
 }
 #endif
 
