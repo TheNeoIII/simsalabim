@@ -1,3 +1,5 @@
+#include <EtherCard.h>
+
 //webserver.h
 static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
 static byte myip[] = { 192,168,178,49 };

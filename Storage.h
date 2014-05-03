@@ -1,20 +1,30 @@
+/*
+  Storage.h - Library for handling the EEPROM storage
+*/
 
-//eeprom-key.h
-const int NOT_FOUND = -1;
+#ifndef Storage_h
+#define Storage_h
+
+const int KEY_NOT_FOUND = -1;
 
 byte
-      keySize   = 10,   // num of bytes used to identify the key
-      storageAddress = 100,  //storage start position for keys
-      counterAddress = 0, //Storage location for key counter - max 255 keys
-      currentUID[10];
-	
-//Return how many keys are in storage
+  keySize   = 10,   // num of bytes used to identify the key
+  storageAddress = 100,  //storage start position for keys
+  counterAddress = 0, //Storage location for key counter - max 255 keys
+  currentUID[10];
+
+int getKeyCount();
+int findKey();
+void saveKey();
+void deleteKey();
+
+
+// Returns how many keys are in storage
 int getKeyCount(){
    return EEPROM.read(counterAddress);
 }
 
-
-// Returns the number of the current key or NOT_FOUND if no key matches
+// Returns the number of the current key or KEY_NOT_FOUND if no key matches
 int findKey() {
   int address;
   boolean matching;
@@ -44,11 +54,11 @@ int findKey() {
   }
 
   Serial.println(F("[find] No stored key matches"));
-  return NOT_FOUND;
+  return KEY_NOT_FOUND;
 }
 
 void saveKey() {
-  if (findKey() != NOT_FOUND) {
+  if (findKey() != KEY_NOT_FOUND) {
     Serial.println(F("[save] Won't save key - already present"));
     return;
   }
@@ -66,8 +76,8 @@ void saveKey() {
 
 void deleteKey(){
   int key = findKey();
-  if (key == NOT_FOUND) {
-    Serial.println(F("[delete] Won't delete key - not present in DB"));
+  if (key == KEY_NOT_FOUND) {
+    Serial.println(F("[delete] Won't delete key - not present in storage"));
     return;
   }
 
@@ -92,3 +102,4 @@ void deleteKey(){
   EEPROM.write(counterAddress, keyCount - 1);
 }
 
+#endif
