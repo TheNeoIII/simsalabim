@@ -44,7 +44,7 @@ void setup(){
   setupTaster();
   setupRelais();
   //setupSDCard();
-  setupWebserver();
+  //setupWebserver();
   
   
   //EEPROM.write(keyCounter, 0x00); //Reset counter
@@ -57,11 +57,8 @@ void loop()
         //loopSDCard();
         //wdt_reset(); //prevent restart if everything ok
 	loopTaster(); //Handle taster
-        wdt_reset(); //prevent restart if everything ok
 	loopRelais();  // Handle the door state (close it if needed)
-        wdt_reset(); //prevent restart if everything ok
-        loopWebserver();
-        wdt_reset(); //prevent restart if everything ok
+        //loopWebserver();
 	loopRFID();  // Check if a key is present and handle it
         wdt_reset(); //prevent restart if everything ok
 }

@@ -31,7 +31,7 @@ void loopRFID(){
 	if(statScan){
                 digitalWrite(pinSS, LOW);//enable rfid module
 		//setupRFID();
-                resetRFID();
+                //resetRFID();
 		
 		// Look for new cards
 		if (!rfid.PICC_IsNewCardPresent()) {

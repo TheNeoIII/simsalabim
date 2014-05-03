@@ -12,7 +12,7 @@ void loopMasterKeys()
           statProg = false;
           Serial.println("[masterkeys] master mode off");
         }
-	if(isMasterKey){
+	if(isMasterKey()){
           Serial.println("[masterkeys] master mode on");
   	  statProg = true;
           timeMasterKey = millis() + 3000; //3s programming mode
