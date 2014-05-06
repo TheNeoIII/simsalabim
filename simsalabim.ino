@@ -21,7 +21,7 @@ void setupWatchdog();
 
 void setup(){
   Serial.begin(9600);
-  Serial.println("[main] Start setup.");
+  Serial.println(F("[setup] *** Simsalabim ***"));
 
   SPI.begin();
 
@@ -35,7 +35,7 @@ void setup(){
   
   //EEPROM.write(keyCounter, 0x00); //Reset counter
 
-  Serial.println("[main] simsalabim setup complete.");
+  Serial.println(F("[setup] complete."));
 }
 
 void loop()
