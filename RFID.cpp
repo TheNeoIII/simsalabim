@@ -34,9 +34,9 @@ bool RFID::isCardAvailable(){
 	return (_rfid->PICC_IsNewCardPresent() && _rfid->PICC_ReadCardSerial());
 }
 
-int *RFID::getCurrentKey(){
+byte *RFID::getCurrentKey(){
 	// Normalize the card's UID to 10 bytes
-	memset(_currentUID, 0, 5);
+	memset(_currentUID, 0, keySize);
 	memcpy(_currentUID, _rfid->uid.uidByte, _rfid->uid.size);
 
 	return _currentUID;

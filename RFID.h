@@ -14,14 +14,14 @@ public:
 	RFID(int pinCS, int pinRS);
 	void resetRFID();
 	bool isCardAvailable();
-	int *getCurrentKey();
+	byte *getCurrentKey();
 	void dumpUID();
 	int keySize;
 private:
 	int _pinCS;
 	int _pinRS;
 	MFRC522* _rfid;
-	int _currentUID[5];
+	byte _currentUID[5];
 };
 #endif
 
