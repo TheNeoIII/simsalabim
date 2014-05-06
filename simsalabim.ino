@@ -3,7 +3,6 @@
 #include <Arduino.h>
 #include <SPI.h>
 #include <avr/wdt.h>
-#include <stdio.h>
 #include <MFRC522.h>
 #include <EEPROM.h>
 
