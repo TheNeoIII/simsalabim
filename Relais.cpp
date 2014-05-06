@@ -16,14 +16,10 @@ Relais::Relais(int pin) {
 void Relais::closeDoor() {
 	Serial.println(F("[door] closing."));
 	digitalWrite(_pin, LOW);
-
-	//timeRelais = 0;
 }
 
 void Relais::openDoor() {
 	Serial.println(F("[door] opening!"));
 	digitalWrite(_pin, HIGH);
-
-	//timeRelais = millis() + 3000;
 }
 

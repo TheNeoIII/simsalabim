@@ -10,7 +10,7 @@
 class Taster{
 public:
 	Taster(int pin);
-	void loopTaster();
+	bool getStatus(); //True=currently pressed, false=not pressed
 protected:
 	int _pin;
 };

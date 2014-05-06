@@ -5,6 +5,9 @@
 #ifndef Storage_h
 #define Storage_h
 
+#include <Arduino.h>
+#include <EEPROM.h>
+
 const int KEY_NOT_FOUND = -1;
 
 byte

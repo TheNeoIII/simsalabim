@@ -12,3 +12,6 @@ Taster::Taster(int pin) {
 	_pin = pin;
 	pinMode(pin, OUTPUT);
 }
+bool Taster::getStatus(){
+	return digitalRead(_pin);
+}

@@ -13,16 +13,15 @@ class RFID {
 public:
 	RFID(int pinCS, int pinRS);
 	void resetRFID();
-	void loopRFID();
+	bool isCardAvailable();
+	int *getCurrentKey();
 	void dumpUID();
-	bool isMasterKey();
-	bool searchRFID();
 	int keySize;
 private:
 	int _pinCS;
 	int _pinRS;
 	MFRC522* _rfid;
-	int currentUID[5];
+	int _currentUID[5];
 };
 #endif
 
