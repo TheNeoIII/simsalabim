@@ -6,7 +6,7 @@
 #include <MFRC522.h>
 #include <EEPROM.h>
 
-//#include <SD.h>  
+#include <SD.h>
 //#include "sdcard.h"
 
 #include "Relais.h"
@@ -21,7 +21,7 @@ void setupWatchdog();
 void setup(){
   Serial.begin(9600);
   Serial.println(F("[setup] *** Simsalabim ***"));
-
+  SD.begin();
   SPI.begin();
 
   setupWatchdog();
@@ -41,7 +41,6 @@ void loop()
 {
   loopTaster(); // Handle the door opener
   loopRelais(); // Handle the door state (close it if needed)
-  
   loopRFID();   // Check if a key is present and handle it
 
   //loopWebserver();
