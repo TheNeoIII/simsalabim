@@ -1,0 +1,53 @@
+/*
+ * RFID.cpp
+ *
+ *  Created on: 06.05.2014
+ *      Author: leonid
+ */
+
+#include "RFID.h"
+
+const byte masterUID[10] = { 0x14, 0x72, 0x95, 0x5B, 0x00};
+
+RFID::RFID(int pinCS, int pinRS) {
+	keySize = 5;
+	_rfid = new MFRC522(pinCS, pinRS);
+	SPI.begin();
+	//if(isModuleAvailable()){
+		//_rfid->PCD_Init();
+	//}
+}
+
+bool RFID::isModuleAvailable(){
+	unsigned int version = _rfid->PCD_ReadRegister(MFRC522::VersionReg);
+	if(!version)
+		return false;
+	else
+		return true;
+}
+
+
+void RFID::resetRFID() {
+	_rfid->PCD_Reset();
+}
+
+bool RFID::isCardAvailable(){
+	return (_rfid->PICC_IsNewCardPresent() && _rfid->PICC_ReadCardSerial());
+}
+
+byte *RFID::getCurrentKey(){
+	// Normalize the card's UID to 10 bytes
+	memset(_currentUID, 0, keySize);
+	memcpy(_currentUID, _rfid->uid.uidByte, _rfid->uid.size);
+
+	return _currentUID;
+}
+
+void RFID::dumpUID() {
+	Serial.print(F("[rfid] current card's ID: "));
+	for (byte i = 0; i < keySize; i++) {
+		Serial.print(_currentUID[i] < 0x10 ? " 0" : " ");
+		Serial.print(_currentUID[i], HEX);
+	}
+	Serial.println();
+}

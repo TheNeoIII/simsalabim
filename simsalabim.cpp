@@ -1,61 +1,51 @@
 /*** Simsalabim Tueroeffnung ***/
 
-#include <Arduino.h>
-#include <SPI.h>
-#include <avr/wdt.h>
-#include <MFRC522.h>
-#include <EEPROM.h>
-
-#include <SD.h>
-//#include "sdcard.h"
-
+#include "Watchdog.h"
 #include "Relais.h"
 #include "Storage.h"
 #include "RFID.h"
 #include "Taster.h"
 
-//#include "libraries/webserver.h"
+Watchdog wdt;		//watchdog for reset after 8 sec
+Relais relais(3); 	//relais on pin 3
+Taster taster(4); 	//taster on pin 4
+RFID rfid(9, 10); 	//rfid on chipselect pin 9 and reset pin 10
 
-void setupWatchdog();
 
-void setup(){
-  Serial.begin(9600);
-  Serial.println(F("[setup] *** Simsalabim ***"));
-  SD.begin();
-  SPI.begin();
+unsigned long timerDoor = 0;
+byte *uid;
 
-  setupWatchdog();
-  setupRFID(); // Initialize the RFID module
-  setupTaster();
-  setupRelais();
-  //setupSDCard();
-  //setupWebserver();
-  
-  
-  //EEPROM.write(keyCounter, 0x00); //Reset counter
-
-  Serial.println(F("[setup] complete."));
+//Setup in class constructor
+void setup() {
+	Serial.begin(9600);
+	Serial.println("Setup Complete");
 }
 
-void loop()
-{
-  loopTaster(); // Handle the door opener
-  loopRelais(); // Handle the door state (close it if needed)
-  loopRFID();   // Check if a key is present and handle it
+void loop() {
+	//Open Door if timerDoor is set
+	//open door if not already open
+	if (timerDoor > millis() && !relais.getStatus()) {
+		relais.openDoor();
+	} else if(timerDoor < millis() && relais.getStatus()){
+		//close door if open
+		relais.closeDoor();
+	}
 
-  //loopWebserver();
-  
-  wdt_reset();  // reset watchdog timer
+	//Open Door for 3 Seconds if Taster pressed
+	if (taster.getStatus()) {
+		timerDoor = millis() + 3000;
+	}
+
+	//Open Door if RFID Card Authenticated
+	//Only works if module present
+	/*if (rfid.isCardAvailable()) {
+		uid = rfid.getCurrentKey();
+		//use storage class for auth check
+		//if(){
+		timerDoor = millis() + 3000;
+		//}
+	}*/
+
+	wdt.reset();
 }
 
-void setupWatchdog()
-{
-  /*** Setup the WDT ***/
-
-  /* Clear the reset flag. */
-  MCUSR &= ~(1<<WDRF);
-  
-  WDTCSR = (1<<WDCE) | (1<<WDE) ;
-  WDTCSR = (1<<WDP0) | (1<<WDP3); //8sec until reset
-  WDTCSR |= (1<<WDIE);
-}
