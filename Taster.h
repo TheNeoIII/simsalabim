@@ -8,11 +8,12 @@
 #include<Arduino.h>
 
 class Taster{
-public:
-	Taster(int pin);
-	bool getStatus(); //True=currently pressed, false=not pressed
-protected:
-	int _pin;
+  public:
+  	Taster(byte, byte);
+  	bool isPressed();
+  protected:
+  	byte _pin;
+    byte _mode;
 };
 
 #endif

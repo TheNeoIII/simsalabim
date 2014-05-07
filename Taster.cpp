@@ -7,12 +7,12 @@
 
 #include "Taster.h"
 
-Taster::Taster(int pin) {
-	// TODO Auto-generated constructor stub
-	_pin = pin;
-	pinMode(pin, INPUT);
-	Serial.println("[Taster] Setup complete");
+Taster::Taster(byte pin, byte mode) {
+  _pin = pin;
+  _mode = mode;
+  pinMode(pin, mode);
 }
-bool Taster::getStatus(){
+
+bool Taster::isPressed(){
 	return !digitalRead(_pin);
 }

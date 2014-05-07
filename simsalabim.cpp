@@ -1,15 +1,19 @@
 /*** Simsalabim Tueroeffnung ***/
 
+#include <SPI.h>
+#include <SD.h>
+
 #include "Watchdog.h"
 #include "Relais.h"
 #include "Storage.h"
-#include "RFID.h"
+//#include "RFID.h"
 #include "Taster.h"
 
+
 Watchdog wdt;		//watchdog for reset after 8 sec
-Relais relais(3); 	//relais on pin 3
-Taster taster(4); 	//taster on pin 4
-RFID rfid(9, 10); 	//rfid on chipselect pin 9 and reset pin 10
+Relais door(3); 	//relais on pin 3
+Taster taster(4, INPUT); 	//taster on pin 4
+//RFID rfid(9, 10); 	//rfid on chipselect pin 9 and reset pin 10
 
 
 unsigned long timerDoor = 0;
@@ -24,15 +28,15 @@ void setup() {
 void loop() {
 	//Open Door if timerDoor is set
 	//open door if not already open
-	if (timerDoor > millis() && !relais.getStatus()) {
-		relais.openDoor();
-	} else if(timerDoor < millis() && relais.getStatus()){
+	if (timerDoor > millis() && !door.getStatus()) {
+		door.open();
+	} else if(timerDoor < millis() && door.getStatus()){
 		//close door if open
-		relais.closeDoor();
+		door.close();
 	}
 
 	//Open Door for 3 Seconds if Taster pressed
-	if (taster.getStatus()) {
+	if (taster.isPressed()) {
 		timerDoor = millis() + 3000;
 	}
 

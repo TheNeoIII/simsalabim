@@ -10,8 +10,8 @@
 class Relais{
 public:
 	Relais(int pin);
-	void openDoor();
-	void closeDoor();
+	void open();
+	void close();
 	bool getStatus();
 protected:
 	int _pin;
