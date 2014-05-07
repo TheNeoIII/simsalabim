@@ -6,23 +6,24 @@
  */
 
 #include "RFID.h"
-#include "MFRC522.h"
 
 const byte masterUID[10] = { 0x14, 0x72, 0x95, 0x5B, 0x00};
 
 RFID::RFID(int pinCS, int pinRS) {
-	// TODO Auto-generated constructor stub
-	_pinCS = pinCS;
-	_pinRS = pinRS;
 	keySize = 5;
+	_rfid = new MFRC522(pinCS, pinRS);
+	SPI.begin();
+	//if(isModuleAvailable()){
+		//_rfid->PCD_Init();
+	//}
+}
 
-	_rfid = new MFRC522(_pinCS, _pinRS);
-
-	pinMode(_pinCS, OUTPUT);
-
-	digitalWrite(_pinCS, LOW);
-	_rfid->PCD_Init();
-	digitalWrite(_pinCS, HIGH);
+bool RFID::isModuleAvailable(){
+	unsigned int version = _rfid->PCD_ReadRegister(MFRC522::VersionReg);
+	if(!version)
+		return false;
+	else
+		return true;
 }
 
 

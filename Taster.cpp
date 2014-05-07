@@ -10,8 +10,9 @@
 Taster::Taster(int pin) {
 	// TODO Auto-generated constructor stub
 	_pin = pin;
-	pinMode(pin, OUTPUT);
+	pinMode(pin, INPUT);
+	Serial.println("[Taster] Setup complete");
 }
 bool Taster::getStatus(){
-	return digitalRead(_pin);
+	return !digitalRead(_pin);
 }

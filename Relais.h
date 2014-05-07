@@ -12,8 +12,10 @@ public:
 	Relais(int pin);
 	void openDoor();
 	void closeDoor();
+	bool getStatus();
 protected:
 	int _pin;
+	bool _status;
 };
 
 #endif

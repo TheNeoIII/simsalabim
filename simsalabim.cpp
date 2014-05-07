@@ -1,17 +1,16 @@
 /*** Simsalabim Tueroeffnung ***/
 
-#include <Arduino.h>
-
+#include "Watchdog.h"
 #include "Relais.h"
 #include "Storage.h"
 #include "RFID.h"
 #include "Taster.h"
-#include "Watchdog.h"
 
+Watchdog wdt;		//watchdog for reset after 8 sec
 Relais relais(3); 	//relais on pin 3
 Taster taster(4); 	//taster on pin 4
 RFID rfid(9, 10); 	//rfid on chipselect pin 9 and reset pin 10
-Watchdog wdt;		//watchdog for reset after 8 sec
+
 
 unsigned long timerDoor = 0;
 byte *uid;
@@ -19,13 +18,16 @@ byte *uid;
 //Setup in class constructor
 void setup() {
 	Serial.begin(9600);
+	Serial.println("Setup Complete");
 }
 
 void loop() {
 	//Open Door if timerDoor is set
-	if (timerDoor > millis()) {
+	//open door if not already open
+	if (timerDoor > millis() && !relais.getStatus()) {
 		relais.openDoor();
-	} else {
+	} else if(timerDoor < millis() && relais.getStatus()){
+		//close door if open
 		relais.closeDoor();
 	}
 
@@ -35,13 +37,14 @@ void loop() {
 	}
 
 	//Open Door if RFID Card Authenticated
-	if (rfid.isCardAvailable()) {
+	//Only works if module present
+	/*if (rfid.isCardAvailable()) {
 		uid = rfid.getCurrentKey();
 		//use storage class for auth check
 		//if(){
 		timerDoor = millis() + 3000;
 		//}
-	}
+	}*/
 
 	wdt.reset();
 }
