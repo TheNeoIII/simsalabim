@@ -10,7 +10,6 @@
 const byte masterUID[10] = { 0x14, 0x72, 0x95, 0x5B, 0x00};
 
 RFIDModul::RFIDModul(int pinCS, int pinRS) {
-	keySize = 5;
 	_rfid = new RFID(pinCS, pinRS);
 	Serial.begin(9600);
 	SPI.begin();
@@ -26,21 +25,19 @@ bool RFIDModul::isCardAvailable(){
 	return (_rfid->isCard() && _rfid->readCardSerial());
 }
 
-byte *RFIDModul::getCurrentKey(){
+void RFIDModul::getCurrentKey(){
 	// Normalize the card's UID to 10 bytes
-	memset(_currentUID, 0, keySize);
-	memcpy(_currentUID, _rfid->serNum, keySize);
+	memset(currentUID, 0, KEY_SIZE);
+	memcpy(currentUID, _rfid->serNum, KEY_SIZE);
 
 	dumpUID();
-
-	return _currentUID;
 }
 
 void RFIDModul::dumpUID() {
 	Serial.print(F("[RFIDModul] current card's ID: "));
-	for (byte i = 0; i < keySize; i++) {
-		Serial.print(_currentUID[i] < 0x10 ? " 0" : " ");
-		Serial.print(_currentUID[i], HEX);
+	for (byte i = 0; i < KEY_SIZE; i++) {
+		Serial.print(currentUID[i] < 0x10 ? " 0" : " ");
+		Serial.print(currentUID[i], HEX);
 	}
 	Serial.println();
 }

@@ -1,134 +1,123 @@
 #include "Storage.h"
 
-void Storage::setup() {
-  Serial.println(F("[storage] setup"));
-  SPI.begin();
-  
-  // Ethernet+SD
-  pinMode(10, OUTPUT);
-  digitalWrite(10, LOW);
+Storage::Storage(byte chipSelect) {
+	_pin = chipSelect;
+	Serial.println(F("[storage] setup"));
+	//SPI.begin();
 
-  pinMode(PIN_SS, OUTPUT);
-  if (!SD.begin(PIN_SS))
-  {
-    Serial.println(F("[storage] error - couldn't initialize SD module"));
-  }
-  
-  Serial.println(F("[storage] setup done."));
+	// Ethernet+SD
+	pinMode(10, OUTPUT); //Requirement for sd lib
+
+	pinMode(_pin, OUTPUT);
+	//digitalWrite(_pin, LOW);
+	if (!SD.begin(_pin)) {
+		Serial.println(F("[storage] error - couldn't initialize SD module"));
+	}
+	//digitalWrite(_pin, HIGH);
+
+	Serial.println(F("[storage] setup done."));
 }
 
-bool Storage::openFile(uint8_t mode)
-{
-  file = SD.open(FILENAME_KEYS, mode);
-  if (!file)
-  {
-    Serial.println(F("[storage] couldn't open key file"));
-    return false;
-  }
-  return true;
+bool Storage::openFile(uint8_t mode) {
+	_file = SD.open(FILENAME_KEYS, mode);
+	if (!_file) {
+		Serial.println(F("[storage] couldn't open key file"));
+		return false;
+	}
+	return true;
 }
 
-void Storage::closeFile()
-{
-  file.close();
+void Storage::closeFile() {
+	_file.close();
 }
 
 // Tries to locate the 
-long Storage::findKey(byte (&key)[5]) {
-  if (!openFile(FILE_READ))
-    return KEY_NOT_FOUND;
-  
-  bool matches = false;
-  unsigned long position = 0;
-  unsigned long size = file.size();
+long Storage::findKey(byte (&key)[KEY_SIZE]) {
+	if (!openFile(FILE_READ))
+		return KEY_NOT_FOUND;
 
+	bool matches = false;
+	unsigned long position = 0;
+	unsigned long size = _file.size();
 
-  Serial.print(F("[storage] current key storage size is "));
-  Serial.println(size);
+	Serial.print(F("[storage] current key storage size is "));
+	Serial.println(size);
 
-  while (position < size)
-  {
-    file.seek(position);
+	while (position < size) {
+		_file.seek(position);
 
-    matches = true;
-    for (byte i=0; i<5; i++)
-    {
-      if (file.read() != key[i])
-      {
-        matches = false;
-        break;
-      }
-    }
+		matches = true;
+		for (byte i = 0; i < 5; i++) {
+			if (_file.read() != key[i]) {
+				matches = false;
+				break;
+			}
+		}
 
-    if (matches)
-    {
-      break;
-    }
-    position += 28;
-  }
+		if (matches) {
+			break;
+		}
+		position += 28;
+	}
 
-  if (!matches)
-  {  
-    closeFile();
-    Serial.println(F("[storage] Key not found."));
-    return KEY_NOT_FOUND;
-  }
+	if (!matches) {
+		closeFile();
+		Serial.println(F("[storage] Key not found."));
+		return KEY_NOT_FOUND;
+	}
 
-  Serial.print(F("[storage] Found key at position "));
-  Serial.println(position/28);
+	Serial.print(F("[storage] Found key at position "));
+	Serial.println(position / 28);
 
-  bool deleted = file.read() == 'N';
-  closeFile();
+	bool deleted = _file.read() == 'N';
+	closeFile();
 
-  if (deleted)
-  {
-    Serial.println(F("[storage] Found key is marked as deleted."));
-  }
-  return position/28;
+	if (deleted) {
+		Serial.println(F("[storage] Found key is marked as deleted."));
+	}
+	return position / 28;
 }
 
-void Storage::saveKey(byte (&key)[5], byte (&data)[21]) {
-  long position = findKey(key);
+void Storage::saveKey(byte (&key)[KEY_SIZE], byte (&data)[21]) {
+	long position = findKey(key);
 
-  if (!openFile(FILE_WRITE))
-    return;
+	if (!openFile(FILE_WRITE))
+		return;
 
-  if (position != KEY_NOT_FOUND)
-  {
-    Serial.println("[storage] jumping to position of key");
-    file.seek(position * 28);
-  }
-  
-  Serial.println(F("[storage] saving key..."));
+	if (position != KEY_NOT_FOUND) {
+		Serial.println("[storage] jumping to position of key");
+		_file.seek(position * 28);
+	}
 
-  for (byte i=0; i<5; i++)
-    file.write(key[i]);
+	Serial.println(F("[storage] saving key..."));
 
-  file.write("Y");
+	for (byte i = 0; i < 5; i++)
+		_file.write(key[i]);
 
-  for (byte i=0; i<21; i++)
-    file.write(data[i]);
+	_file.write("Y");
 
-  file.write("\n");
-  closeFile();
+	for (byte i = 0; i < 21; i++)
+		_file.write(data[i]);
+
+	_file.write("\n");
+	closeFile();
 }
 
-void Storage::deleteKey(byte (&key)[5]){
-  long position = findKey(key);
+void Storage::deleteKey(byte (&key)[KEY_SIZE]) {
+	long position = findKey(key);
 
-  if (!openFile(FILE_WRITE))
-    return;
+	if (!openFile(FILE_WRITE))
+		return;
 
-  if (position == KEY_NOT_FOUND)
-  {
-    Serial.println("[storage] can't delete not exsiting key");
-    return;
-  }
+	if (position == KEY_NOT_FOUND) {
+		Serial.println("[storage] can't delete not exsiting key");
+		return;
+	}
 
-  Serial.println(F("[storage] setting delete flag of given key"));
+	Serial.println(F("[storage] setting delete flag of given key"));
 
-  file.seek(position * 28 + 5);
-  file.write("N");
+	_file.seek(position * 28 + 5);
+	_file.write("N");
 
-  closeFile();
+	closeFile();
 }

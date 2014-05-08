@@ -8,18 +8,20 @@
 #include<SPI.h>
 #include<RFID.h>
 
+#define KEY_SIZE 10
+
 class RFIDModul {
 public:
 	RFIDModul(int pinCS, int pinRS);
 	void reset();
 	bool isCardAvailable();
 	bool isModuleAvailable();
-	byte *getCurrentKey();
+	void getCurrentKey();
 	void dumpUID();
-	int keySize;
+	byte currentUID[KEY_SIZE];
 private:
 	RFID* _rfid;
-	byte _currentUID[5];
+
 };
 #endif
 

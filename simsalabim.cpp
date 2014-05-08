@@ -14,10 +14,10 @@ Watchdog wdt;		//watchdog for reset after 8 sec
 Relais door(3); 	//relais on pin 3
 Taster taster(4, INPUT); 	//taster on pin 4
 RFIDModul rfid(10, 9); 	//rfid on chipselect pin 9 and reset pin 10
-
+Storage storage(7);	//sd card module with chipselect on pin 7
 
 unsigned long timerDoor = 0;
-byte *uid;
+byte uid[5];
 
 //Setup in class constructor
 void setup() {
@@ -37,17 +37,18 @@ void loop() {
 
 	//Open Door for 3 Seconds if Taster pressed
 	if (taster.isPressed()) {
-		timerDoor = millis() + 3000;
+		timerDoor = millis() + 1500;
 	}
 
 	//Open Door if RFID Card Authenticated
 	//Only works if module present
 	if (rfid.isCardAvailable()) {
-		uid = rfid.getCurrentKey();
+		rfid.getCurrentKey();
 		//use storage class for auth check
-		//if(){
-		timerDoor = millis() + 3000;
-		//}
+
+		if(storage.findKey(rfid.currentUID) != KEY_NOT_FOUND){
+			timerDoor = millis() + 1500;
+		}
 	}
 
 	wdt.reset();
