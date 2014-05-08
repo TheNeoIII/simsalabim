@@ -3,13 +3,13 @@
 #include "Watchdog.h"
 #include "Relais.h"
 #include "Storage.h"
-#include "RFID.h"
+#include "RFIDModul.h"
 #include "Taster.h"
 
 Watchdog wdt;		//watchdog for reset after 8 sec
 Relais relais(3); 	//relais on pin 3
 Taster taster(4); 	//taster on pin 4
-RFID rfid(10, 9); 	//rfid on chipselect pin 9 and reset pin 10
+RFIDModul rfid(10, 9); 	//rfid on chipselect pin 9 and reset pin 10
 
 
 unsigned long timerDoor = 0;
