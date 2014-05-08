@@ -11,34 +11,27 @@ const byte masterUID[10] = { 0x14, 0x72, 0x95, 0x5B, 0x00};
 
 RFID::RFID(int pinCS, int pinRS) {
 	keySize = 5;
-	_rfid = new MFRC522(pinCS, pinRS);
+	_rfid = new RFIDLib(pinCS, pinRS);
+	Serial.begin(9600);
 	SPI.begin();
-	//if(isModuleAvailable()){
-		//_rfid->PCD_Init();
-	//}
+	_rfid->init();
+	Serial.println("[RFID] Ready");
 }
-
-bool RFID::isModuleAvailable(){
-	unsigned int version = _rfid->PCD_ReadRegister(MFRC522::VersionReg);
-	if(!version)
-		return false;
-	else
-		return true;
-}
-
 
 void RFID::resetRFID() {
-	_rfid->PCD_Reset();
+	_rfid->reset();
 }
 
 bool RFID::isCardAvailable(){
-	return (_rfid->PICC_IsNewCardPresent() && _rfid->PICC_ReadCardSerial());
+	return (_rfid->isCard() && _rfid->readCardSerial());
 }
 
 byte *RFID::getCurrentKey(){
 	// Normalize the card's UID to 10 bytes
 	memset(_currentUID, 0, keySize);
-	memcpy(_currentUID, _rfid->uid.uidByte, _rfid->uid.size);
+	memcpy(_currentUID, _rfid->serNum, keySize);
+
+	dumpUID();
 
 	return _currentUID;
 }

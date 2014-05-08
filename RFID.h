@@ -5,10 +5,8 @@
 #define RFID_h
 
 #include<Arduino.h>
-#include <SPI.h>
-#include<MFRC522.h>
-
-#define KEY_NOT_FOUND -1
+#include<SPI.h>
+#include<RFIDLib.h>
 
 class RFID {
 public:
@@ -20,7 +18,7 @@ public:
 	void dumpUID();
 	int keySize;
 private:
-	MFRC522* _rfid;
+	RFIDLib* _rfid;
 	byte _currentUID[5];
 };
 #endif
