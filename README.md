@@ -7,7 +7,9 @@ Genutzte Libraries
 ------------------
 
 * Ethernet: https://github.com/ntruchsess/arduino_uip/
-* RFID: https://github.com/song940/rfid
+* RFID:
+  * https://github.com/song940/rfid
+  * https://github.com/ljos/MFRC522
 * SD: Arduino SD library
 
 Datenstruktur
