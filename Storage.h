@@ -12,6 +12,7 @@
 #define FILENAME_KEYS "KEYS.TXT"
 #define KEY_NOT_FOUND -1
 #define KEY_SIZE 10
+#define FRAME_SIZE KEY_SIZE + 1 + (24*7)/8 + 1
 
 class Storage {
 public:
@@ -21,8 +22,7 @@ public:
 	void deleteKey(byte (&)[KEY_SIZE]);
 
 private:
-	unsigned char _buffer[28];
-	byte _key[5];
+	byte _key[KEY_SIZE];
 	byte _pin;
 	File _file;
 

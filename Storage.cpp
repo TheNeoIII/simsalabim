@@ -47,7 +47,7 @@ long Storage::findKey(byte (&key)[KEY_SIZE]) {
 		_file.seek(position);
 
 		matches = true;
-		for (byte i = 0; i < 5; i++) {
+		for (byte i = 0; i < KEY_SIZE; i++) {
 			if (_file.read() != key[i]) {
 				matches = false;
 				break;
@@ -57,7 +57,7 @@ long Storage::findKey(byte (&key)[KEY_SIZE]) {
 		if (matches) {
 			break;
 		}
-		position += 28;
+		position += FRAME_SIZE;
 	}
 
 	if (!matches) {
@@ -67,7 +67,7 @@ long Storage::findKey(byte (&key)[KEY_SIZE]) {
 	}
 
 	Serial.print(F("[storage] Found key at position "));
-	Serial.println(position / 28);
+	Serial.println(position / FRAME_SIZE);
 
 	bool deleted = _file.read() == 'N';
 	closeFile();
@@ -75,7 +75,7 @@ long Storage::findKey(byte (&key)[KEY_SIZE]) {
 	if (deleted) {
 		Serial.println(F("[storage] Found key is marked as deleted."));
 	}
-	return position / 28;
+	return position / FRAME_SIZE;
 }
 
 void Storage::saveKey(byte (&key)[KEY_SIZE], byte (&data)[21]) {
@@ -86,12 +86,12 @@ void Storage::saveKey(byte (&key)[KEY_SIZE], byte (&data)[21]) {
 
 	if (position != KEY_NOT_FOUND) {
 		Serial.println("[storage] jumping to position of key");
-		_file.seek(position * 28);
+		_file.seek(position * FRAME_SIZE);
 	}
 
 	Serial.println(F("[storage] saving key..."));
 
-	for (byte i = 0; i < 5; i++)
+	for (byte i = 0; i < KEY_SIZE; i++)
 		_file.write(key[i]);
 
 	_file.write("Y");
@@ -116,7 +116,7 @@ void Storage::deleteKey(byte (&key)[KEY_SIZE]) {
 
 	Serial.println(F("[storage] setting delete flag of given key"));
 
-	_file.seek(position * 28 + 5);
+	_file.seek(position * FRAME_SIZE + KEY_SIZE);
 	_file.write("N");
 
 	closeFile();

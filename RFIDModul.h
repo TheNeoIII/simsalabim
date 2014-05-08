@@ -6,7 +6,8 @@
 
 #include<Arduino.h>
 #include<SPI.h>
-#include<RFID.h>
+//#include<RFID.h>
+#include <MFRC522.h>
 
 #define KEY_SIZE 10
 
@@ -20,7 +21,8 @@ public:
 	void dumpUID();
 	byte currentUID[KEY_SIZE];
 private:
-	RFID* _rfid;
+	//RFID* _rfid;
+	MFRC522* _rfid;
 
 };
 #endif

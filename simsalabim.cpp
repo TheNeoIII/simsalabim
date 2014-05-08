@@ -8,6 +8,7 @@
 #include "Storage.h"
 #include "RFIDModul.h"
 #include "Taster.h"
+#include "EthernetModul.h"
 
 
 Watchdog wdt;		//watchdog for reset after 8 sec
@@ -15,6 +16,7 @@ Relais door(3); 	//relais on pin 3
 Taster taster(4, INPUT); 	//taster on pin 4
 RFIDModul rfid(10, 9); 	//rfid on chipselect pin 9 and reset pin 10
 Storage storage(7);	//sd card module with chipselect on pin 7
+//EthernetModul network(8); //cs on pin 8
 
 unsigned long timerDoor = 0;
 byte uid[5];
@@ -42,6 +44,7 @@ void loop() {
 
 	//Open Door if RFID Card Authenticated
 	//Only works if module present
+
 	if (rfid.isCardAvailable()) {
 		rfid.getCurrentKey();
 		//use storage class for auth check
