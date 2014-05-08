@@ -1,26 +1,24 @@
 /*
  RFID.h - Library for handling the RFID
  */
-#ifndef RFID_h
-#define RFID_h
+#ifndef RFIDModul_h
+#define RFIDModul_h
 
 #include<Arduino.h>
-#include <SPI.h>
-#include<MFRC522.h>
+#include<SPI.h>
+#include<RFID.h>
 
-#define KEY_NOT_FOUND -1
-
-class RFID {
+class RFIDModul {
 public:
-	RFID(int pinCS, int pinRS);
-	void resetRFID();
+	RFIDModul(int pinCS, int pinRS);
+	void reset();
 	bool isCardAvailable();
 	bool isModuleAvailable();
 	byte *getCurrentKey();
 	void dumpUID();
 	int keySize;
 private:
-	MFRC522* _rfid;
+	RFID* _rfid;
 	byte _currentUID[5];
 };
 #endif
