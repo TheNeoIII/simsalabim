@@ -14,14 +14,14 @@ Relais::Relais(int pin) {
 	_status = false;
 }
 
-void Relais::closeDoor() {
-	Serial.println(F("[door] closing."));
+void Relais::close() {
+	Serial.println(F("[relais] closing."));
 	digitalWrite(_pin, LOW);
 	_status = false;
 }
 
-void Relais::openDoor() {
-	Serial.println(F("[door] opening!"));
+void Relais::open() {
+	Serial.println(F("[relais] opening!"));
 	digitalWrite(_pin, HIGH);
 	_status = true;
 }
